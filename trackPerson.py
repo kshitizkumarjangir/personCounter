@@ -58,12 +58,7 @@ def detectPerson(video_feed):
 
     class_list = model.names  # class name dict
 
-    # read webcam feed
-    cap = cv2.VideoCapture(video_feed)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
+    # Load Deep Sort model to track the objects
     object_tracker = DeepSort(max_age=10,
                               n_init=2,
                               nms_max_overlap=0.8,
@@ -85,13 +80,17 @@ def detectPerson(video_feed):
     enteredPeople = []  # list of entered people ID
     exitedPeople = []  # list of exited people ID
 
+    # read video feed
+    cap = cv2.VideoCapture(video_feed)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
     while True:
         _, img = cap.read()
         if img is None:
             break
 
         t1 = time.time()
-        # img = cv2.resize(img, (640, 480))
 
         # Detect frame image - Yolo
         result = model(img)
@@ -108,12 +107,10 @@ def detectPerson(video_feed):
                 if class_name in object_type_to_tracked or len(object_type_to_tracked) == 0:
                     x1, y1 = int(df['xmin'][idx]), int(df['ymin'][idx])
                     x2, y2 = int(df['xmax'][idx]), int(df['ymax'][idx])
-                    # class_idx = df['class'][idx]
-                    # obj_text = class_name + " " + str(confidence)
-                    # obj_color = tuple(list(rand_color[int(class_idx)]))
+
                     detections.append(([x1, y1, int(x2 - x1), int(y2 - y1)], confidence, class_name))
 
-        # Tracking Objects
+        # Tracking Objects - Using Deep Sort
         tracks = object_tracker.update_tracks(detections, frame=img)
 
         for track in tracks:
@@ -171,7 +168,8 @@ def detectPerson(video_feed):
             cv2.putText(img, "Total People Inside: " + str(enteredCount - exitedCount), (5, 110), font, 1,
                         (89, 255, 84), 1)
             if (enteredCount - exitedCount) > max_people_allowed:
-                cv2.putText(img, "Warning! Total people inside are more than maximum allowable limit: " +
+                cv2.putText(img, "Warning! The space is overcrowded." + '\n' +
+                            "Total people inside are more than maximum allowable safety limit of " +
                             str(max_people_allowed), (310, 30), font, 1, (0, 0, 255), 1)
 
         # Fetch FPS

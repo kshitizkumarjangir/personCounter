@@ -28,7 +28,7 @@ def is_pt_crossed_entry_line(pt):
     len_pt_ep2 = np.sqrt((exit_area[1][0] - pt[0]) ** 2 + (exit_area[1][1] - pt[1]) ** 2)
 
     fraction = (len_pt_ep1 + len_pt_ep2) / entry_line_len
-    print(fraction)
+
     if 1.05 >= fraction > 0.95:
         return True
     else:
@@ -126,23 +126,21 @@ def detectPerson(video_feed):
             obj_color = rand_color[list(class_list.values()).index(class_name)]
             obj_color = tuple(np.ndarray.tolist(obj_color))
 
-            identifier = class_name + " ID: " + str(track_id)
-
             # Add marker and class name + track ID
             cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), obj_color, 1)
             if show_annotation:
-                cv2.putText(img, identifier, (int(bbox[0]), int(bbox[1] - 10)),
+                cv2.putText(img, str(track_id), (int(bbox[0]), int(bbox[1] - 10)),
                             font, 0.9, obj_color, 2)
 
             # mark entry/exit line and space
-            pts = exit_area.reshape((-1, 1, 2))
-            cv2.polylines(img, [pts], True, (123, 255, 255), 1)
-            cv2.line(img, (exit_area[0][0], exit_area[0][1]), (exit_area[1][0], exit_area[1][1]), (0, 0, 0), 2)
+            # pts = exit_area.reshape((-1, 1, 2))
+            # cv2.polylines(img, [pts], True, (123, 255, 255), 1)
+            cv2.line(img, (exit_area[0][0], exit_area[0][1]), (exit_area[1][0], exit_area[1][1]), (255, 0, 0), 3)
 
             # BBox center point
             c_pt = (int(bbox[2]), int(bbox[3]))
 
-            #cv2.circle(img, c_pt, 3, (255, 123, 255), 2)
+            # cv2.circle(img, c_pt, 3, (255, 123, 255), 2)
 
             if track_id in personData.keys():
 
@@ -168,14 +166,13 @@ def detectPerson(video_feed):
             # Update exit/entry status
             cv2.putText(img, "Entered People Count: " + str(enteredCount), (5, 50), font, 0.9, (255, 0, 255), 1)
             cv2.putText(img, "Exited People Count: " + str(exitedCount), (5, 80), font, 0.9, (255, 0, 255), 1)
-            cv2.putText(img, "Max. People Allowed Inside: " + str(max_people_allowed), (5, 110), font, 0.9,
-                        (0, 0, 0), 1)
-            if (enteredCount - exitedCount) < max_people_allowed:
-                cv2.putText(img, "Total People Inside: " + str(enteredCount - exitedCount), (5, 130), font, 0.9,
-                            (0, 255, 0), 1)
-            else:
-                cv2.putText(img, "Total People Inside: " + str(enteredCount - exitedCount), (5, 130), font,
-                            0.9, (0, 0, 255), 1)
+            # cv2.putText(img, "Max. People Allowed Inside: " + str(max_people_allowed), (5, 110), font, 0.9,
+            #             (255, 128, 0), 1)
+            cv2.putText(img, "Total People Inside: " + str(enteredCount - exitedCount), (5, 110), font, 1,
+                        (89, 255, 84), 1)
+            if (enteredCount - exitedCount) > max_people_allowed:
+                cv2.putText(img, "Warning! Total people inside are more than maximum allowable limit: " +
+                            str(max_people_allowed), (310, 30), font, 1, (0, 0, 255), 1)
 
         # Fetch FPS
         fps = 1. / (time.time() - t1)
@@ -205,7 +202,7 @@ if __name__ == "__main__":
 
     root_window = 'personCounter'
     show_annotation = True
-    max_people_allowed = 8
+    max_people_allowed = 5
 
     object_type_to_tracked = ['person']
     min_confidence = 0.49

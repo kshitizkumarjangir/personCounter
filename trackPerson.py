@@ -168,16 +168,20 @@ def detectPerson(video_feed):
             cv2.putText(img, "Total People Inside: " + str(enteredCount - exitedCount), (5, 110), font, 1,
                         (89, 255, 84), 1)
             if (enteredCount - exitedCount) > max_people_allowed:
-                cv2.putText(img, "Warning! The space is overcrowded." + '\n' +
-                            "Total people inside are more than maximum allowable safety limit of " +
-                            str(max_people_allowed), (310, 30), font, 1, (0, 0, 255), 1)
+                text = "Warning! The space is overcrowded. Please be cautious." + \
+                        '\n' + "Total people inside are more than maximum allowable safety limit of " + \
+                        str(max_people_allowed)
+                y0, dy = 30, 30
+                for i, line in enumerate(text.split('\n')):
+                    y = y0 + i * dy
+                    cv2.putText(img, str(line), (310, y), font, 0.9, (0, 0, 255), 2)
 
         # Fetch FPS
         fps = 1. / (time.time() - t1)
         cv2.putText(img, "FPS: {:.0f}".format(fps), org=(5, 30), fontFace=font, fontScale=2,
                     color=(255, 255, 0), thickness=2)
 
-        img = cv2.resize(img, (1080, 720))
+        img = cv2.resize(img, (1280, 720))
         cv2.imshow(root_window, img)
 
         c = cv2.waitKey(1)
@@ -200,13 +204,13 @@ if __name__ == "__main__":
 
     root_window = 'personCounter'
     show_annotation = True
-    max_people_allowed = 5
+    max_people_allowed = 12
 
     object_type_to_tracked = ['person']
-    min_confidence = 0.49
+    min_confidence = 0.5
 
     cv2.namedWindow(root_window)
 
-    videoPath = 'testData/station.mp4'
+    videoPath = 'testData/fair.mp4'
 
     detectPerson(videoPath)

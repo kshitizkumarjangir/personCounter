@@ -9,14 +9,24 @@ from deep_sort_realtime.deepsort_tracker import DeepSort
 
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
-exit_area = np.array([
+exit_area = np.array([            # station video
     (888, 720),  # bottom-left corner
     (1096, 540),  # top-left corner
     (1203, 563),  # top-right corner
     (1071, 720)],  # bottom-right corner
     np.int32)
 
-entry_line_len = np.sqrt((exit_area[0][0] - exit_area[1][0]) ** 2 + (exit_area[0][1] - exit_area[1][1]) ** 2)
+# exit_area = np.array([          # subway video
+#     (252, 584),  # bottom-left corner
+#     (265, 550),  # top-left corner
+#     (1147, 553),  # top-right corner
+#     (1169, 583)],  # bottom-right corner
+#     np.int32)
+
+#entry_line = [(265, 550), (1147, 550)]
+entry_line = [(888, 720), (1096, 540)]
+
+entry_line_len = np.sqrt((entry_line[0][0] - entry_line[1][0]) ** 2 + (entry_line[0][1] - entry_line[1][1]) ** 2)
 
 
 def is_pt_crossed_entry_line(pt):
@@ -24,8 +34,8 @@ def is_pt_crossed_entry_line(pt):
     (888, 720),  # bottom-left corner
     (1087, 452)  # top-left corner
     """
-    len_pt_ep1 = np.sqrt((exit_area[0][0] - pt[0]) ** 2 + (exit_area[0][1] - pt[1]) ** 2)
-    len_pt_ep2 = np.sqrt((exit_area[1][0] - pt[0]) ** 2 + (exit_area[1][1] - pt[1]) ** 2)
+    len_pt_ep1 = np.sqrt((entry_line[0][0] - pt[0]) ** 2 + (entry_line[0][1] - pt[1]) ** 2)
+    len_pt_ep2 = np.sqrt((entry_line[1][0] - pt[0]) ** 2 + (entry_line[1][1] - pt[1]) ** 2)
 
     fraction = (len_pt_ep1 + len_pt_ep2) / entry_line_len
 
@@ -132,8 +142,9 @@ def detectPerson(video_feed):
             # mark entry/exit line and space
             # pts = exit_area.reshape((-1, 1, 2))
             # cv2.polylines(img, [pts], True, (123, 255, 255), 1)
-            cv2.line(img, (exit_area[0][0], exit_area[0][1]), (exit_area[1][0], exit_area[1][1]), (255, 0, 0), 3)
-
+            cv2.line(img, (entry_line[0][0], entry_line[0][1]), (entry_line[1][0], entry_line[1][1]), (255, 0, 0), 3)
+            cv2.putText(img, 'Exit Line', org=(entry_line[1][0], entry_line[1][1]), fontFace=font, fontScale=1,
+                        color=(255, 255, 0), thickness=2)
             # BBox center point
             c_pt = (int(bbox[2]), int(bbox[3]))
 
@@ -161,20 +172,20 @@ def detectPerson(video_feed):
                 personData[track_id] = False
 
             # Update exit/entry status
-            cv2.putText(img, "Entered People Count: " + str(enteredCount), (5, 50), font, 0.9, (255, 0, 255), 1)
-            cv2.putText(img, "Exited People Count: " + str(exitedCount), (5, 80), font, 0.9, (255, 0, 255), 1)
+            cv2.putText(img, "Entered People Count: " + str(enteredCount), (5, 50), font, 0.9, (0, 255, 0), 1)
+            cv2.putText(img, "Exited People Count: " + str(exitedCount), (5, 80), font, 0.9, (0, 255, 0), 1)
             # cv2.putText(img, "Max. People Allowed Inside: " + str(max_people_allowed), (5, 110), font, 0.9,
             #             (255, 128, 0), 1)
-            cv2.putText(img, "Total People Inside: " + str(enteredCount - exitedCount), (5, 110), font, 1,
-                        (89, 255, 84), 1)
+            cv2.putText(img, "Total People Inside: " + str(enteredCount - exitedCount), (5, 110), font, 1.2,
+                        (255, 255, 21), 1)
             if (enteredCount - exitedCount) > max_people_allowed:
                 text = "Warning! The space is overcrowded. Please be cautious." + \
-                        '\n' + "Total people inside are more than maximum allowable safety limit of " + \
-                        str(max_people_allowed)
+                        '\n' + "[Maximum allowable safety limit: " + \
+                        str(max_people_allowed) + ']'
                 y0, dy = 30, 30
                 for i, line in enumerate(text.split('\n')):
                     y = y0 + i * dy
-                    cv2.putText(img, str(line), (310, y), font, 0.9, (0, 0, 255), 2)
+                    cv2.putText(img, str(line), (330, y), font, 1.2, (0, 0, 255), 2)
 
         # Fetch FPS
         fps = 1. / (time.time() - t1)
@@ -204,13 +215,13 @@ if __name__ == "__main__":
 
     root_window = 'personCounter'
     show_annotation = True
-    max_people_allowed = 12
+    max_people_allowed = 5
 
     object_type_to_tracked = ['person']
     min_confidence = 0.5
 
     cv2.namedWindow(root_window)
 
-    videoPath = 'testData/fair.mp4'
+    videoPath = 'testData/station.mp4'
 
     detectPerson(videoPath)
